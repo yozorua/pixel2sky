@@ -75,9 +75,7 @@ class ProjectionModel(abc.ABC):
                 ``fy_scale`` is not strictly positive.
         """
         if focal_length <= 0.0:
-            raise ValueError(
-                f"focal_length must be > 0, got {focal_length!r}"
-            )
+            raise ValueError(f"focal_length must be > 0, got {focal_length!r}")
         if fy_scale <= 0.0:
             raise ValueError(f"fy_scale must be > 0, got {fy_scale!r}")
 

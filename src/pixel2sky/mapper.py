@@ -296,7 +296,8 @@ class SkyMapper:
         """
         x = np.arange(self.image_width, dtype=np.float64)
         y = np.arange(self.image_height, dtype=np.float64)
-        return np.meshgrid(x, y)
+        xx, yy = np.meshgrid(x, y)
+        return xx.astype(np.float64), yy.astype(np.float64)
 
     def fov_degrees(self) -> tuple[float, float]:
         """Approximate horizontal and vertical field of view.
@@ -313,12 +314,8 @@ class SkyMapper:
             correctly because it uses the full sky-angle calculation rather
             than a paraxial approximation.
         """
-        corners_x = np.array(
-            [0.0, self.image_width - 1, 0.0, self.image_width - 1]
-        )
-        corners_y = np.array(
-            [0.0, 0.0, self.image_height - 1, self.image_height - 1]
-        )
+        corners_x = np.array([0.0, self.image_width - 1, 0.0, self.image_width - 1])
+        corners_y = np.array([0.0, 0.0, self.image_height - 1, self.image_height - 1])
         alt_c, az_c = self.pixel_to_altaz(corners_x, corners_y)
 
         def _angular_separation(

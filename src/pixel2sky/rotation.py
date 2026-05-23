@@ -114,9 +114,7 @@ def build_rotation(
         True
     """
     if not -90.0 <= alt0 <= 90.0:
-        raise ValueError(
-            f"alt0 must be in [-90, 90] degrees, got {alt0!r}"
-        )
+        raise ValueError(f"alt0 must be in [-90, 90] degrees, got {alt0!r}")
 
     az_r = np.deg2rad(az0)
     alt_r = np.deg2rad(alt0)
@@ -128,9 +126,9 @@ def build_rotation(
 
     # Camera axes in World (ENU) frame when roll = 0.
     # These form an orthonormal right-handed basis: x0 × y0 = z0.
-    x0 = np.array([ca,      -sa,      0.0])  # image right  (∂boresight/∂az, normalised)
-    y0 = np.array([se * sa,  se * ca, -ce])  # image down   (−∂boresight/∂alt)
-    z0 = np.array([ce * sa,  ce * ca,  se])  # boresight    (toward az0, alt0)
+    x0 = np.array([ca, -sa, 0.0])  # image right  (∂boresight/∂az, normalised)
+    y0 = np.array([se * sa, se * ca, -ce])  # image down   (−∂boresight/∂alt)
+    z0 = np.array([ce * sa, ce * ca, se])  # boresight    (toward az0, alt0)
 
     # Apply clockwise sensor roll about z0.
     # A CW roll carries x0 toward y0:  x' = cos(r)·x0 + sin(r)·y0
@@ -212,7 +210,7 @@ def altaz_to_world_vector(
     cos_alt = np.cos(alt_r)
     x = cos_alt * np.sin(az_r)  # East
     y = cos_alt * np.cos(az_r)  # North
-    z = np.sin(alt_r)           # Zenith
+    z = np.sin(alt_r)  # Zenith
 
     return np.stack([x, y, z], axis=-1)
 

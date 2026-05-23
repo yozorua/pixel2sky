@@ -27,16 +27,17 @@ from pixel2sky.rotation import (
 # altaz_to_world_vector / world_vector_to_altaz
 # -----------------------------------------------------------------------
 
+
 class TestAltAzWorldVectorConversion:
     @pytest.mark.parametrize(
         "alt, az, expected_xyz",
         [
-            (90.0, 0.0, [0.0, 0.0, 1.0]),   # Zenith
-            (0.0, 0.0, [0.0, 1.0, 0.0]),    # North horizon
-            (0.0, 90.0, [1.0, 0.0, 0.0]),   # East horizon
-            (0.0, 180.0, [0.0, -1.0, 0.0]), # South horizon
-            (0.0, 270.0, [-1.0, 0.0, 0.0]), # West horizon
-            (-90.0, 0.0, [0.0, 0.0, -1.0]), # Nadir
+            (90.0, 0.0, [0.0, 0.0, 1.0]),  # Zenith
+            (0.0, 0.0, [0.0, 1.0, 0.0]),  # North horizon
+            (0.0, 90.0, [1.0, 0.0, 0.0]),  # East horizon
+            (0.0, 180.0, [0.0, -1.0, 0.0]),  # South horizon
+            (0.0, 270.0, [-1.0, 0.0, 0.0]),  # West horizon
+            (-90.0, 0.0, [0.0, 0.0, -1.0]),  # Nadir
         ],
     )
     def test_cardinal_directions(
@@ -78,6 +79,7 @@ class TestAltAzWorldVectorConversion:
 # -----------------------------------------------------------------------
 # build_rotation
 # -----------------------------------------------------------------------
+
 
 class TestBuildRotation:
     def test_alt_out_of_range_raises(self) -> None:
@@ -130,6 +132,7 @@ class TestBuildRotation:
         boresight_world = camera_to_world(boresight_cam, R)
 
         from pixel2sky.rotation import world_vector_to_altaz
+
         alt_out, az_out = world_vector_to_altaz(boresight_world)
         assert_allclose(alt_out.ravel()[0], 0.0, atol=1e-9)
         assert_allclose(az_out.ravel()[0] % 360.0, az0 % 360.0, atol=1e-9)
@@ -141,6 +144,7 @@ class TestBuildRotation:
         boresight_world = camera_to_world(boresight_cam, R)
 
         from pixel2sky.rotation import world_vector_to_altaz
+
         alt_out, _ = world_vector_to_altaz(boresight_world)
         assert_allclose(alt_out.ravel()[0], alt0, atol=1e-9)
 
@@ -148,6 +152,7 @@ class TestBuildRotation:
 # -----------------------------------------------------------------------
 # world_to_camera / camera_to_world round-trip
 # -----------------------------------------------------------------------
+
 
 class TestRotationRoundTrip:
     @pytest.mark.parametrize(

@@ -69,6 +69,7 @@ def zenith_fisheye_mapper() -> SkyMapper:
 # Constructor validation
 # -----------------------------------------------------------------------
 
+
 class TestSkyMapperConstructor:
     def test_negative_width_raises(self) -> None:
         with pytest.raises(ValueError, match="image_width"):
@@ -118,10 +119,9 @@ class TestSkyMapperConstructor:
 # Image centre → boresight
 # -----------------------------------------------------------------------
 
+
 class TestImageCentreToBoresight:
-    def test_rectilinear_centre_to_altaz(
-        self, rectilinear_mapper: SkyMapper
-    ) -> None:
+    def test_rectilinear_centre_to_altaz(self, rectilinear_mapper: SkyMapper) -> None:
         cx = W / 2.0
         cy = H / 2.0
         alt, az = rectilinear_mapper.pixel_to_altaz(cx, cy)
@@ -147,6 +147,7 @@ class TestImageCentreToBoresight:
 # Round-trip: Alt/Az → pixels → Alt/Az
 # -----------------------------------------------------------------------
 
+
 class TestAltAzToPixelRoundTrip:
     def _run_round_trip(
         self,
@@ -162,9 +163,7 @@ class TestAltAzToPixelRoundTrip:
         assert_allclose(alt_out, alt_in[valid], atol=atol)
         assert_allclose(az_out, az_in[valid], atol=atol)
 
-    def test_rectilinear_round_trip(
-        self, rectilinear_mapper: SkyMapper
-    ) -> None:
+    def test_rectilinear_round_trip(self, rectilinear_mapper: SkyMapper) -> None:
         rng = np.random.default_rng(1)
         # Constrain to ≈ the camera FOV to ensure most points are on-sensor
         alt_in = rng.uniform(10.0, 50.0, size=200)
@@ -177,9 +176,7 @@ class TestAltAzToPixelRoundTrip:
         az_in = rng.uniform(140.0, 220.0, size=200)
         self._run_round_trip(fisheye_mapper, alt_in, az_in)
 
-    def test_zenith_fisheye_round_trip(
-        self, zenith_fisheye_mapper: SkyMapper
-    ) -> None:
+    def test_zenith_fisheye_round_trip(self, zenith_fisheye_mapper: SkyMapper) -> None:
         rng = np.random.default_rng(3)
         # All altitudes close to zenith to land on the sensor
         alt_in = rng.uniform(45.0, 90.0, size=300)
@@ -190,6 +187,7 @@ class TestAltAzToPixelRoundTrip:
 # -----------------------------------------------------------------------
 # Round-trip: pixel → Alt/Az → pixel
 # -----------------------------------------------------------------------
+
 
 class TestPixelToAltAzRoundTrip:
     def _run_round_trip(
@@ -206,9 +204,7 @@ class TestPixelToAltAzRoundTrip:
         assert_allclose(x_out, x_in[valid], atol=atol)
         assert_allclose(y_out, y_in[valid], atol=atol)
 
-    def test_rectilinear_pixel_round_trip(
-        self, rectilinear_mapper: SkyMapper
-    ) -> None:
+    def test_rectilinear_pixel_round_trip(self, rectilinear_mapper: SkyMapper) -> None:
         rng = np.random.default_rng(10)
         x = rng.uniform(0.0, W - 1, size=300)
         y = rng.uniform(0.0, H - 1, size=300)
@@ -225,6 +221,7 @@ class TestPixelToAltAzRoundTrip:
 # Out-of-bounds masking
 # -----------------------------------------------------------------------
 
+
 class TestOutOfBoundsMasking:
     def test_behind_camera_altaz_returns_nan(
         self, rectilinear_mapper: SkyMapper
@@ -237,9 +234,7 @@ class TestOutOfBoundsMasking:
         assert np.all(np.isnan(x))
         assert np.all(np.isnan(y))
 
-    def test_far_off_axis_returns_nan(
-        self, rectilinear_mapper: SkyMapper
-    ) -> None:
+    def test_far_off_axis_returns_nan(self, rectilinear_mapper: SkyMapper) -> None:
         # Points 89° away from boresight should project off-sensor for a
         # modest focal length.
         alt = np.array([30.0])
@@ -263,6 +258,7 @@ class TestOutOfBoundsMasking:
 # -----------------------------------------------------------------------
 # Edge cases
 # -----------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_extreme_roll_180_round_trip(self) -> None:
@@ -336,6 +332,7 @@ class TestEdgeCases:
 # Grid / convenience methods
 # -----------------------------------------------------------------------
 
+
 class TestGridAndConvenienceMethods:
     def test_pixel_grid_shape(self, rectilinear_mapper: SkyMapper) -> None:
         xx, yy = rectilinear_mapper.pixel_grid()
@@ -379,6 +376,7 @@ class TestGridAndConvenienceMethods:
 # -----------------------------------------------------------------------
 # Vectorisation / throughput sanity
 # -----------------------------------------------------------------------
+
 
 class TestVectorisedThroughput:
     def test_full_4k_grid_no_loop(self) -> None:

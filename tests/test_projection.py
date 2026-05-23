@@ -22,6 +22,7 @@ from pixel2sky.projection import EquidistantFisheye, Rectilinear
 # Shared fixtures
 # -----------------------------------------------------------------------
 
+
 @pytest.fixture(params=[100.0, 500.0, 1200.0])
 def focal_length(request: pytest.FixtureRequest) -> float:
     return request.param
@@ -30,6 +31,7 @@ def focal_length(request: pytest.FixtureRequest) -> float:
 # -----------------------------------------------------------------------
 # ProjectionModel base validation
 # -----------------------------------------------------------------------
+
 
 class TestProjectionModelValidation:
     def test_negative_focal_length_raises(self) -> None:
@@ -56,6 +58,7 @@ class TestProjectionModelValidation:
 # -----------------------------------------------------------------------
 # Rectilinear
 # -----------------------------------------------------------------------
+
 
 class TestRectilinear:
     def test_optical_axis_back_projects_to_z(self, focal_length: float) -> None:
@@ -134,6 +137,7 @@ class TestRectilinear:
 # -----------------------------------------------------------------------
 # EquidistantFisheye
 # -----------------------------------------------------------------------
+
 
 class TestEquidistantFisheye:
     def test_optical_axis_back_projects_to_z(self, focal_length: float) -> None:
