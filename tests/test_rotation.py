@@ -23,7 +23,6 @@ from pixel2sky.rotation import (
     world_vector_to_altaz,
 )
 
-
 # -----------------------------------------------------------------------
 # altaz_to_world_vector / world_vector_to_altaz
 # -----------------------------------------------------------------------
@@ -91,7 +90,8 @@ class TestBuildRotation:
 
     def test_zenith_camera_boresight_points_up(self) -> None:
         """When pointing at zenith (alt0=90), the boresight (+Z world = zenith)
-        should map to the Camera +Z axis."""
+        should map to the Camera +Z axis.
+        """
         R = build_rotation(az0=0.0, alt0=90.0, roll=0.0)
         zenith_world = np.array([[0.0, 0.0, 1.0]])
         v_cam = world_to_camera(zenith_world, R)
@@ -123,7 +123,8 @@ class TestBuildRotation:
     @pytest.mark.parametrize("az0", [0.0, 45.0, 90.0, 135.0, 180.0, 270.0, 359.0])
     def test_azimuth_sweep(self, az0: float) -> None:
         """The boresight direction in World frame should equal the expected
-        Alt/Az vector for any azimuth."""
+        Alt/Az vector for any azimuth.
+        """
         R = build_rotation(az0=az0, alt0=0.0, roll=0.0)
         boresight_cam = np.array([[0.0, 0.0, 1.0]])
         boresight_world = camera_to_world(boresight_cam, R)

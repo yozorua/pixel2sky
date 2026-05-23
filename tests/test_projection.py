@@ -18,7 +18,6 @@ from numpy.testing import assert_allclose
 
 from pixel2sky.projection import EquidistantFisheye, Rectilinear
 
-
 # -----------------------------------------------------------------------
 # Shared fixtures
 # -----------------------------------------------------------------------
@@ -103,7 +102,7 @@ class TestRectilinear:
         assert np.all(np.isnan(dy))
 
     def test_non_square_pixels(self) -> None:
-        """fy = 2·fx should double the dy offset for the same ray."""
+        """Fy = 2·fx should double the dy offset for the same ray."""
         f = 500.0
         m_sq = Rectilinear(focal_length=f, fy_scale=1.0)
         m_ns = Rectilinear(focal_length=f, fy_scale=2.0)

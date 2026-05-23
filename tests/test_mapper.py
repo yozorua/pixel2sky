@@ -20,7 +20,6 @@ from numpy.testing import assert_allclose
 from pixel2sky import SkyMapper
 from pixel2sky.projection import EquidistantFisheye, Rectilinear
 
-
 # -----------------------------------------------------------------------
 # Fixtures
 # -----------------------------------------------------------------------

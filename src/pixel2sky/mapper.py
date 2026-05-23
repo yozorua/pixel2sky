@@ -35,8 +35,6 @@ The inverse pipeline runs in the opposite direction.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation
@@ -89,12 +87,12 @@ class SkyMapper:
         self,
         image_width: int,
         image_height: int,
-        projection: Optional[ProjectionModel] = None,
+        projection: ProjectionModel | None = None,
         az0: float = 0.0,
         alt0: float = 0.0,
         roll: float = 0.0,
-        cx: Optional[float] = None,
-        cy: Optional[float] = None,
+        cx: float | None = None,
+        cy: float | None = None,
     ) -> None:
         """Initialise the SkyMapper with intrinsic and extrinsic parameters.
 
@@ -165,7 +163,7 @@ class SkyMapper:
         self,
         x: NDArray[np.float64] | float,
         y: NDArray[np.float64] | float,
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Transform 2D pixel coordinates to Alt/Az sky coordinates.
 
         This is a fully vectorised operation. Pass arrays of any shape;
@@ -227,7 +225,7 @@ class SkyMapper:
         self,
         alt: NDArray[np.float64] | float,
         az: NDArray[np.float64] | float,
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Transform Alt/Az sky coordinates to 2D pixel coordinates.
 
         Points that are behind the camera, outside the sensor bounds, or
@@ -285,7 +283,7 @@ class SkyMapper:
     # Convenience methods
     # ------------------------------------------------------------------
 
-    def pixel_grid(self) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def pixel_grid(self) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a meshgrid covering every pixel of the sensor.
 
         Returns:
@@ -300,7 +298,7 @@ class SkyMapper:
         y = np.arange(self.image_height, dtype=np.float64)
         return np.meshgrid(x, y)
 
-    def fov_degrees(self) -> Tuple[float, float]:
+    def fov_degrees(self) -> tuple[float, float]:
         """Approximate horizontal and vertical field of view.
 
         Computes the angular span by transforming the four image corners and
@@ -344,7 +342,7 @@ class SkyMapper:
         self,
         x: NDArray[np.float64],
         y: NDArray[np.float64],
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Replace out-of-bounds pixel coordinates with NaN.
 
         Pixels are considered valid when their centre lies within the half-open

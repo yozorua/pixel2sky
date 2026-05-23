@@ -160,7 +160,7 @@ def world_to_camera(
         Array of shape ``(..., 3)`` with the same vectors expressed in the
         Camera frame ``(right, down, forward)``.
     """
-    return R.apply(np.asarray(v_world, dtype=np.float64))
+    return np.asarray(R.apply(np.asarray(v_world, dtype=np.float64)), dtype=np.float64)
 
 
 def camera_to_world(
@@ -179,22 +179,23 @@ def camera_to_world(
         Array of shape ``(..., 3)`` with the same vectors expressed in the
         World frame ``(East, North, Zenith)``.
     """
-    return R.inv().apply(np.asarray(v_cam, dtype=np.float64))
+    result = R.inv().apply(np.asarray(v_cam, dtype=np.float64))
+    return np.asarray(result, dtype=np.float64)
 
 
 def altaz_to_world_vector(
     alt: NDArray[np.float64],
     az: NDArray[np.float64],
 ) -> NDArray[np.float64]:
-    """Convert Alt/Az sky coordinates to World-frame unit vectors.
+    r"""Convert Alt/Az sky coordinates to World-frame unit vectors.
 
     Uses the local horizontal (ENU) convention:
 
     .. math::
 
-        X &= \\cos(alt)\\sin(az)  \\quad (\\text{East}) \\\\
-        Y &= \\cos(alt)\\cos(az)  \\quad (\\text{North}) \\\\
-        Z &= \\sin(alt)           \\quad (\\text{Zenith})
+        X &= \cos(alt)\sin(az)  \quad (\text{East}) \\
+        Y &= \cos(alt)\cos(az)  \quad (\text{North}) \\
+        Z &= \sin(alt)           \quad (\text{Zenith})
 
     Args:
         alt: Altitude angles in degrees, shape ``(...,)``.

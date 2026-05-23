@@ -21,7 +21,7 @@ Subclasses must implement :meth:`ProjectionModel.pixel_to_ray` and
 :meth:`ProjectionModel.ray_to_pixel`.  The :class:`SkyMapper` facade calls
 only these two entry-points.
 
-References
+References:
 ----------
 Kannala & Brandt (2006), "A Generic Camera Model and Calibration Method for
 Conventional, Wide-Angle, and Fish-Eye Lenses", IEEE TPAMI 28(8).
@@ -30,7 +30,6 @@ Conventional, Wide-Angle, and Fish-Eye Lenses", IEEE TPAMI 28(8).
 from __future__ import annotations
 
 import abc
-from typing import Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -115,7 +114,7 @@ class ProjectionModel(abc.ABC):
     def ray_to_pixel(
         self,
         rays: NDArray[np.float64],
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Map unit rays in the Camera frame to offset pixel coordinates.
 
         Args:
@@ -157,7 +156,7 @@ class ProjectionModel(abc.ABC):
 
 
 class Rectilinear(ProjectionModel):
-    """Standard pinhole (rectilinear) projection model.
+    r"""Standard pinhole (rectilinear) projection model.
 
     The rectilinear model describes an ideal pinhole camera where straight
     lines in 3D space project to straight lines in the image.  It is the
@@ -171,15 +170,15 @@ class Rectilinear(ProjectionModel):
 
     .. math::
 
-        dx = f_x \\cdot \\frac{X_c}{Z_c}, \\quad
-        dy = f_y \\cdot \\frac{Y_c}{Z_c}
+        dx = f_x \cdot \frac{X_c}{Z_c}, \quad
+        dy = f_y \cdot \frac{Y_c}{Z_c}
 
     **Back-projection** (pixel → ray):
 
     .. math::
 
-        \\mathbf{v} = \\frac{(dx/f_x,\\; dy/f_y,\\; 1)}{
-            \\|(dx/f_x,\\; dy/f_y,\\; 1)\\|}
+        \mathbf{v} = \frac{(dx/f_x,\; dy/f_y,\; 1)}{
+            \|(dx/f_x,\; dy/f_y,\; 1)\|}
 
     Field of view is limited to a half-angle :math:`< 90°`; rays with
     ``Zc ≤ 0`` are invalid and produce ``NaN``.
@@ -212,7 +211,7 @@ class Rectilinear(ProjectionModel):
     def ray_to_pixel(
         self,
         rays: NDArray[np.float64],
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Project Camera-frame rays to offset pixel coordinates.
 
         Args:
@@ -233,7 +232,7 @@ class Rectilinear(ProjectionModel):
 
 
 class EquidistantFisheye(ProjectionModel):
-    """Equidistant fisheye projection model (``r = f · θ``).
+    r"""Equidistant fisheye projection model (``r = f · θ``).
 
     The equidistant model maps the angle θ between a scene ray and the
     optical axis linearly to the radial distance ``r`` on the sensor.  It is
@@ -247,30 +246,30 @@ class EquidistantFisheye(ProjectionModel):
 
     .. math::
 
-        \\theta = \\arctan2\\!\\left(
-            \\sqrt{X_c^2 + Y_c^2},\\; Z_c
-        \\right) \\in [0,\\; \\pi]
+        \theta = \arctan2\!\left(
+            \sqrt{X_c^2 + Y_c^2},\; Z_c
+        \right) \in [0,\; \pi]
 
-        r = f_x \\cdot \\theta
+        r = f_x \cdot \theta
 
-        \\phi = \\arctan2(Y_c, X_c)
+        \phi = \arctan2(Y_c, X_c)
 
-        dx = r \\cos\\phi = f_x \\cdot \\theta \\cdot
-            \\frac{X_c}{\\sqrt{X_c^2 + Y_c^2}}
+        dx = r \cos\phi = f_x \cdot \theta \cdot
+            \frac{X_c}{\sqrt{X_c^2 + Y_c^2}}
 
-        dy = r \\sin\\phi = f_x \\cdot \\theta \\cdot
-            \\frac{Y_c}{\\sqrt{X_c^2 + Y_c^2}}
+        dy = r \sin\phi = f_x \cdot \theta \cdot
+            \frac{Y_c}{\sqrt{X_c^2 + Y_c^2}}
 
     **Back-projection** (pixel → ray):
 
     .. math::
 
-        r   = \\sqrt{dx^2 + dy^2}, \\quad
-        \\theta = r / f_x
+        r   = \sqrt{dx^2 + dy^2}, \quad
+        \theta = r / f_x
 
-        X_c = \\sin\\theta \\cdot dx / r, \\quad
-        Y_c = \\sin\\theta \\cdot dy / r, \\quad
-        Z_c = \\cos\\theta
+        X_c = \sin\theta \cdot dx / r, \quad
+        Y_c = \sin\theta \cdot dy / r, \quad
+        Z_c = \cos\theta
 
     This model accepts rays pointing in any hemisphere (``θ ∈ [0°, 180°]``),
     making it suitable for cameras with a field of view up to 360°.
@@ -318,7 +317,7 @@ class EquidistantFisheye(ProjectionModel):
     def ray_to_pixel(
         self,
         rays: NDArray[np.float64],
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Project Camera-frame rays to offset pixel coordinates.
 
         The equidistant model can project rays from any direction (full
