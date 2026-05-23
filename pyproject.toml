@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pixel2sky"
+version = "0.1.0"
+description = "Bidirectional pixel ↔ sky coordinate transformation for astronomical cameras."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Jamie Chang", email = "yozorua.me@gmail.com" }]
+keywords = ["astronomy", "astrometry", "fisheye", "camera", "coordinate-transform"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "hypothesis>=6.88",
+    "ruff>=0.3",
+    "mypy>=1.8",
+]
+docs = [
+    "sphinx>=7.0",
+    "furo>=2024.1",
+    "sphinx-autodoc-typehints>=1.25",
+]
+
+[project.urls]
+Repository = "https://github.com/yozorua/pixel2sky"
+"Bug Tracker" = "https://github.com/yozorua/pixel2sky/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pixel2sky"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/pixel2sky"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+warn_return_any = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "ANN", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
