@@ -32,7 +32,12 @@ Typical usage::
 
 from pixel2sky._version import __version__
 from pixel2sky.mapper import SkyMapper
-from pixel2sky.projection import EquidistantFisheye, ProjectionModel, Rectilinear
+from pixel2sky.projection import (
+    EquidistantFisheye,
+    ProjectionModel,
+    Rectilinear,
+    StereographicFisheye,
+)
 
 __all__ = [
     "__version__",
@@ -40,4 +45,5 @@ __all__ = [
     "ProjectionModel",
     "Rectilinear",
     "EquidistantFisheye",
+    "StereographicFisheye",
 ]

@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from pixel2sky.projection import EquidistantFisheye, Rectilinear
+from pixel2sky.projection import EquidistantFisheye, Rectilinear, StereographicFisheye
 
 # -----------------------------------------------------------------------
 # Shared fixtures
@@ -53,6 +53,43 @@ class TestProjectionModelValidation:
     def test_fisheye_repr_contains_class_name(self) -> None:
         model = EquidistantFisheye(focal_length=400.0)
         assert "EquidistantFisheye" in repr(model)
+
+    # --- plate_scale input ---
+
+    def test_plate_scale_sets_correct_fx(self) -> None:
+        """plate_scale=s should give fx = 206265 / s."""
+        ps = 10.0
+        model = Rectilinear(plate_scale=ps)
+        assert_allclose(model.fx, 206265.0 / ps, rtol=1e-12)
+
+    def test_plate_scale_property_roundtrip(self) -> None:
+        """model.plate_scale must invert the input plate_scale exactly."""
+        ps = 7.5
+        model = EquidistantFisheye(plate_scale=ps)
+        assert_allclose(model.plate_scale, ps, rtol=1e-12)
+
+    def test_focal_and_plate_scale_mutually_exclusive(self) -> None:
+        with pytest.raises(ValueError, match="only one"):
+            Rectilinear(focal_length=500.0, plate_scale=10.0)
+
+    def test_neither_focal_nor_plate_scale_raises(self) -> None:
+        with pytest.raises(ValueError, match="Specify either"):
+            Rectilinear()  # type: ignore[call-arg]
+
+    def test_negative_plate_scale_raises(self) -> None:
+        with pytest.raises(ValueError, match="plate_scale"):
+            Rectilinear(plate_scale=-5.0)
+
+    def test_plate_scale_fisheye_round_trip(self) -> None:
+        """Fisheye built with plate_scale must pass a pixel round-trip."""
+        model = EquidistantFisheye(plate_scale=15.0)
+        rng = np.random.default_rng(99)
+        dx_in = rng.uniform(-model.fx * 0.5, model.fx * 0.5, size=100)
+        dy_in = rng.uniform(-model.fx * 0.5, model.fx * 0.5, size=100)
+        rays = model.pixel_to_ray(dx_in, dy_in)
+        dx_out, dy_out = model.ray_to_pixel(rays)
+        assert_allclose(dx_out, dx_in, atol=1e-9)
+        assert_allclose(dy_out, dy_in, atol=1e-9)
 
 
 # -----------------------------------------------------------------------
@@ -209,6 +246,78 @@ class TestEquidistantFisheye:
 
     def test_pixel_shape_2d_batch(self) -> None:
         model = EquidistantFisheye(focal_length=400.0)
+        dx = np.zeros((8, 16))
+        dy = np.zeros((8, 16))
+        rays = model.pixel_to_ray(dx, dy)
+        assert rays.shape == (8, 16, 3)
+
+
+# -----------------------------------------------------------------------
+# StereographicFisheye
+# -----------------------------------------------------------------------
+
+
+class TestStereographicFisheye:
+    def test_optical_axis_back_projects_to_z(self, focal_length: float) -> None:
+        model = StereographicFisheye(focal_length=focal_length)
+        ray = model.pixel_to_ray(np.array([0.0]), np.array([0.0]))
+        assert_allclose(ray[0], [0.0, 0.0, 1.0], atol=1e-12)
+
+    def test_round_trip_forward_hemisphere(self, focal_length: float) -> None:
+        model = StereographicFisheye(focal_length=focal_length)
+        rng = np.random.default_rng(9)
+        theta = rng.uniform(0.0, np.deg2rad(89.0), size=300)
+        phi = rng.uniform(0.0, 2 * np.pi, size=300)
+        dx_in = focal_length * 2.0 * np.tan(theta / 2.0) * np.cos(phi)
+        dy_in = focal_length * 2.0 * np.tan(theta / 2.0) * np.sin(phi)
+
+        rays = model.pixel_to_ray(dx_in, dy_in)
+        dx_out, dy_out = model.ray_to_pixel(rays)
+
+        assert_allclose(dx_out, dx_in, atol=1e-9)
+        assert_allclose(dy_out, dy_in, atol=1e-9)
+
+    def test_radial_distance_matches_formula(self, focal_length: float) -> None:
+        """Projected radius must equal 2f·tan(θ/2) for known angles."""
+        model = StereographicFisheye(focal_length=focal_length)
+        thetas = np.deg2rad([0.0, 30.0, 60.0, 90.0, 120.0])
+        rays = np.stack(
+            [np.sin(thetas), np.zeros_like(thetas), np.cos(thetas)], axis=-1
+        )
+        dx, dy = model.ray_to_pixel(rays)
+
+        expected_r = 2.0 * focal_length * np.tan(thetas / 2.0)
+        actual_r = np.sqrt(dx**2 + dy**2)
+        assert_allclose(actual_r, expected_r, atol=1e-9)
+
+    def test_output_rays_are_unit_vectors(self, focal_length: float) -> None:
+        model = StereographicFisheye(focal_length=focal_length)
+        theta = np.linspace(0.0, np.deg2rad(150.0), 50)
+        dx = 2.0 * focal_length * np.tan(theta / 2.0)
+        dy = np.zeros(50)
+        rays = model.pixel_to_ray(dx, dy)
+        norms = np.linalg.norm(rays, axis=-1)
+        assert_allclose(norms, 1.0, atol=1e-12)
+
+    def test_principal_point_no_division_by_zero(self) -> None:
+        model = StereographicFisheye(focal_length=300.0)
+        ray = np.array([[0.0, 0.0, 1.0]])
+        dx, dy = model.ray_to_pixel(ray)
+        assert_allclose(dx, [0.0], atol=1e-12)
+        assert_allclose(dy, [0.0], atol=1e-12)
+
+    def test_conformal_angles_preserved(self, focal_length: float) -> None:
+        """Radial and transverse scale factors must be equal (conformality)."""
+        thetas = np.deg2rad(np.array([10.0, 30.0, 60.0, 90.0, 120.0]))
+        # Radial scale: dr/dθ = f / cos²(θ/2)
+        radial_scale = focal_length / np.cos(thetas / 2.0) ** 2
+        # Transverse scale: r / sin(θ) = 2f·tan(θ/2) / sin(θ)
+        r = 2.0 * focal_length * np.tan(thetas / 2.0)
+        transverse_scale = r / np.sin(thetas)
+        assert_allclose(radial_scale, transverse_scale, rtol=1e-10)
+
+    def test_pixel_shape_2d_batch(self) -> None:
+        model = StereographicFisheye(focal_length=400.0)
         dx = np.zeros((8, 16))
         dy = np.zeros((8, 16))
         rays = model.pixel_to_ray(dx, dy)

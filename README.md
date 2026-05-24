@@ -17,15 +17,16 @@
 1. [Mathematical Background](#mathematical-background)
 2. [Architecture](#architecture)
 3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Usage Examples](#usage-examples)
-6. [API Reference](#api-reference)
-7. [Projection Models](#projection-models)
-8. [Running the Tests](#running-the-tests)
-9. [Roadmap](#roadmap)
-10. [Citation](#citation)
-11. [Contributing](#contributing)
-12. [License](#license)
+4. [SkyViewer — Interactive GUI](#skyviewer--interactive-gui)
+5. [Quick Start](#quick-start)
+6. [Usage Examples](#usage-examples)
+7. [API Reference](#api-reference)
+8. [Projection Models](#projection-models)
+9. [Running the Tests](#running-the-tests)
+10. [Roadmap](#roadmap)
+11. [Citation](#citation)
+12. [Contributing](#contributing)
+13. [License](#license)
 
 ---
 
@@ -115,6 +116,30 @@ Zc = cos(θ)
 
 This model supports the full sphere (`θ ∈ [0°, 180°]`), making it ideal for cameras with fields of view up to 360°.
 
+#### Stereographic Fisheye (`r = 2f · tan(θ/2)`)
+
+The **only** fisheye projection that is *conformal* — it preserves angles at every point. As a practical consequence, Alt/Az grid lines are always perpendicular in the image, matching their geometry on the celestial sphere.
+
+**Projection**:
+```
+θ = arctan2( sqrt(Xc² + Yc²),  Zc )
+r = 2 · fx · tan(θ/2)
+ϕ = arctan2(Yc, Xc)
+dx = r · cos(ϕ)
+dy = r · sin(ϕ)
+```
+
+**Back-projection**:
+```
+r = sqrt(dx² + dy²)
+θ = 2 · arctan( r / (2·fx) )
+Xc = sin(θ) · dx / r
+Yc = sin(θ) · dy / r
+Zc = cos(θ)
+```
+
+The antipodal point (`θ = 180°`) maps to `r → ∞`; for `θ > ~150°` the radius grows rapidly and typically falls outside any finite sensor.
+
 ### Full Transformation Pipeline
 
 ```
@@ -143,7 +168,7 @@ pixel2sky/
 │       ├── __init__.py       # Public API surface
 │       ├── _version.py       # Single-source version string
 │       ├── projection.py     # Intrinsics: ProjectionModel, Rectilinear,
-│       │                     #             EquidistantFisheye
+│       │                     #             EquidistantFisheye, StereographicFisheye
 │       ├── rotation.py       # Extrinsics: build_rotation, world↔camera
 │       │                     #             helpers, altaz↔vector utilities
 │       └── mapper.py         # Facade: SkyMapper class
@@ -179,6 +204,41 @@ pip install -e ".[dev]"
 ```
 
 **Requirements**: Python ≥ 3.10, NumPy ≥ 1.24, SciPy ≥ 1.10.
+
+---
+
+## SkyViewer — Interactive GUI
+
+<div align="center">
+  <img src="docs/skyviewer.png" alt="SkyViewer screenshot" width="820"/>
+</div>
+
+SkyViewer is an interactive desktop application for exploring and validating camera calibrations. Load a sky image, tune the camera parameters, and instantly see Alt/Az grid overlays or query individual pixels.
+
+### Launch
+
+```bash
+# Install with GUI extras
+pip install "pixel2sky[examples]"
+
+# Or from source
+pip install -e ".[examples]"
+
+# Run
+python examples/sky_viewer.py
+```
+
+### Features
+
+| Feature | Description |
+|---|---|
+| **Image loading** | Open any JPEG/PNG/TIFF sky image |
+| **Projection model** | Switch between Rectilinear, Equidistant Fisheye, and Stereographic (✦ conformal) via dropdown |
+| **Focal length modes** | Enter focal length as pixels, plate scale (″/px), or physical (lens mm + sensor μm/px) |
+| **Boresight & roll** | Set Az₀, Alt₀, Xc, Yc, and roll directly |
+| **Alt/Az grid overlay** | Toggle a live grid overlay (teal iso-altitude lines, blue iso-azimuth lines) |
+| **Pixel → Sky query** | Click any pixel to read out its Altitude and Azimuth |
+| **Sky → Pixel query** | Enter an Alt/Az to find and mark the corresponding image pixel |
 
 ---
 
@@ -378,35 +438,49 @@ EquidistantFisheye(
 
 Equidistant model (`r = f·θ`). Supports the full sphere including rays behind the optical axis.
 
+### `StereographicFisheye`
+
+```python
+StereographicFisheye(
+    focal_length: float,
+    cx: float = 0.0,
+    cy: float = 0.0,
+)
+```
+
+Stereographic model (`r = 2f·tan(θ/2)`). The only conformal fisheye projection — preserves angles at every point in the image. Supports all directions except the exact antipodal point (`θ = 180°`).
+
 ### Custom Projection Models
 
-Subclass `ProjectionModel` and implement the two abstract methods:
+Subclass `ProjectionModel` and implement the two abstract methods. For example, the equisolid-angle model (`r = 2f·sin(θ/2)`) used by many Sony and Sigma fisheye lenses:
 
 ```python
 from pixel2sky.projection import ProjectionModel
 import numpy as np
-from numpy.typing import NDArray
 
-class StereographicProjection(ProjectionModel):
-    """r = 2f·tan(θ/2)"""
+class EquisolidFisheye(ProjectionModel):
+    """r = 2f·sin(θ/2) — preserves solid angle (surface area on the sphere)."""
 
     def pixel_to_ray(self, dx, dy):
+        dx = np.asarray(dx, dtype=np.float64)
+        dy = np.asarray(dy, dtype=np.float64)
         r = np.sqrt(dx**2 + dy**2)
-        theta = 2.0 * np.arctan2(r, 2.0 * self.fx)
-        sin_t = np.sin(theta)
+        # θ = 2·arcsin(r / 2f)  (clamp to [-1, 1] for numerical safety)
+        theta = 2.0 * np.arcsin(np.clip(r / (2.0 * self.fx), -1.0, 1.0))
+        sin_theta = np.sin(theta)
         with np.errstate(invalid="ignore", divide="ignore"):
-            scale = np.where(r > 0, sin_t / r, 0.0)
-        return self._safe_normalise(
-            np.stack([scale * dx, scale * dy, np.cos(theta)], axis=-1)
-        )
+            scale = np.where(r > 0, sin_theta / r, 0.0)
+        xc = scale * dx
+        yc = scale * dy
+        zc = np.cos(theta)
+        return np.stack([xc, yc, zc], axis=-1)
 
     def ray_to_pixel(self, rays):
-        rays = np.asarray(rays, dtype=np.float64)
-        rays = self._safe_normalise(rays)
+        rays = self._safe_normalise(np.asarray(rays, dtype=np.float64))
         xc, yc, zc = rays[..., 0], rays[..., 1], rays[..., 2]
         rho = np.sqrt(xc**2 + yc**2)
         theta = np.arctan2(rho, zc)
-        r = 2.0 * self.fx * np.tan(theta / 2.0)
+        r = 2.0 * self.fx * np.sin(theta / 2.0)
         with np.errstate(invalid="ignore", divide="ignore"):
             scale = np.where(rho > 0, r / rho, 0.0)
         return scale * xc, scale * yc
@@ -420,10 +494,23 @@ class StereographicProjection(ProjectionModel):
 |---|---|---|---|---|
 | `Rectilinear` | `r = f·tan(θ)` | Standard DSLR / security camera | < 180° | ✅ Implemented |
 | `EquidistantFisheye` | `r = f·θ` | All-sky, wide-angle fisheye | 360° | ✅ Implemented |
-| Stereographic | `r = 2f·tan(θ/2)` | Conformal maps, area-preserving | < 360° | Planned |
+| `StereographicFisheye` | `r = 2f·tan(θ/2)` | Conformal (angle-preserving) fisheye | < 360° | ✅ Implemented |
 | Equisolid angle | `r = 2f·sin(θ/2)` | Solid-angle-preserving fisheye | 360° | Planned |
 
-The first two are provided out of the box; additional models can be added by subclassing `ProjectionModel`.
+All three implemented models are provided out of the box; additional models can be added by subclassing `ProjectionModel`.
+
+### Choosing a Projection Model
+
+| Your setup | Recommended model | Why |
+|---|---|---|
+| Standard DSLR, mirrorless, or security camera (focal length 10–200 mm) | `Rectilinear` | These lenses are designed to satisfy `r ∝ tan(θ)`. Straight lines in the scene appear straight in the image. |
+| Wide-angle or all-sky fisheye lens (FOV 100°–360°) | `EquidistantFisheye` | The most common fisheye mapping. Equal angular steps produce equal pixel steps radially, making the star/satellite density uniform. |
+| Fisheye lens, but correct angles between features matter most | `StereographicFisheye` | The **only** fisheye mapping that is conformal (angle-preserving everywhere). Alt/Az grid lines always cross at right angles in the image, exactly as they do on the celestial sphere. |
+| You have a calibration file from OpenCV or MATLAB | Use the reported `fx`, `fy`, `cx`, `cy` with `Rectilinear` (and undistort first with `cv2.undistort` if `k1 ≠ 0`) | Standard calibration pipelines assume the pinhole model. |
+
+**Quick rule of thumb:**
+- Horizon looks straight at any tilt → `Rectilinear`
+- Horizon bows outward (barrel) → fisheye; if grid lines stay perpendicular → `StereographicFisheye`, otherwise → `EquidistantFisheye`
 
 > **Note — Lens distortion is not yet modelled.** Current projection models assume an ideal, distortion-free lens. Real lenses exhibit radial distortion (barrel / pincushion) and tangential distortion due to manufacturing imperfections and element misalignment. Support for distortion coefficients is planned; see the [Roadmap](#roadmap) section.
 
@@ -528,7 +615,8 @@ If you use `pixel2sky` in academic work, a research project, or a published pipe
   institution  = {Institute of Astronomy, National Tsing Hua University},
   url          = {https://github.com/yozorua/pixel2sky},
   note         = {Python package. NumPy- and SciPy-based; supports
-                  rectilinear and equidistant fisheye projection models.}
+                  rectilinear, equidistant, and stereographic fisheye
+                  projection models.}
 }
 ```
 

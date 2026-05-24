@@ -35,6 +35,10 @@ dev = [
     "ruff>=0.3",
     "mypy>=1.8",
 ]
+examples = [
+    "PyQt6>=6.5",
+    "matplotlib>=3.7",
+]
 docs = [
     "sphinx>=7.0",
     "furo>=2024.1",
