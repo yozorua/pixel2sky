@@ -253,7 +253,7 @@ from pixel2sky.projection import EquidistantFisheye
 mapper = SkyMapper(
     image_width=2048,
     image_height=2048,
-    projection=EquidistantFisheye(focal_length=600.0),
+    projection=EquidistantFisheye(plate_scale=344.0),  # 344 arcsec/px
     az0=0.0,    # boresight azimuth: North
     alt0=90.0,  # boresight altitude: zenith
     roll=0.0,
@@ -286,7 +286,7 @@ from pixel2sky.projection import Rectilinear
 mapper = SkyMapper(
     image_width=1920,
     image_height=1080,
-    projection=Rectilinear(focal_length=1200.0),
+    projection=Rectilinear(plate_scale=172.0),  # 172 arcsec/px
     az0=135.0,   # South-East
     alt0=30.0,
     roll=0.0,
@@ -313,7 +313,7 @@ from pixel2sky.projection import EquidistantFisheye
 mapper = SkyMapper(
     image_width=4096,
     image_height=4096,
-    projection=EquidistantFisheye(focal_length=1050.0),
+    projection=EquidistantFisheye(plate_scale=196.0),  # 196 arcsec/px
     az0=0.0,
     alt0=90.0,   # zenith-pointing
     roll=0.0,
@@ -337,7 +337,7 @@ from pixel2sky.projection import Rectilinear
 mapper = SkyMapper(
     image_width=1920,
     image_height=1080,
-    projection=Rectilinear(focal_length=800.0, fy_scale=1.002),  # slight squeeze
+    projection=Rectilinear(plate_scale=258.0, fy_scale=1.002),  # 258 arcsec/px, slight squeeze
     az0=0.0,
     alt0=45.0,
     roll=0.0,
@@ -357,7 +357,7 @@ from numpy.testing import assert_allclose
 mapper = SkyMapper(
     image_width=2048,
     image_height=2048,
-    projection=EquidistantFisheye(focal_length=600.0),
+    projection=EquidistantFisheye(plate_scale=344.0),  # 344 arcsec/px
     az0=0.0, alt0=90.0, roll=0.0,
 )
 
@@ -397,7 +397,7 @@ SkyMapper(
 |---|---|
 | `image_width` | Sensor width in pixels |
 | `image_height` | Sensor height in pixels |
-| `projection` | Lens model; defaults to `Rectilinear(focal_length=image_width)` |
+| `projection` | Lens model; defaults to `Rectilinear(focal_length=image_width)` (≈ 90° horizontal FOV) |
 | `az0` | Boresight azimuth in degrees (clockwise from North) |
 | `alt0` | Boresight altitude in degrees (0=horizon, 90=zenith) |
 | `roll` | Clockwise sensor roll about the optical axis in degrees |
@@ -417,10 +417,11 @@ SkyMapper(
 
 ```python
 Rectilinear(
-    focal_length: float,
+    plate_scale: float,          # arcsec/px  ← preferred
     cx: float = 0.0,
     cy: float = 0.0,
     fy_scale: float = 1.0,
+    # alternative: focal_length=<pixels>
 )
 ```
 
@@ -430,9 +431,10 @@ Standard pinhole model. Valid for front-hemisphere rays only (`Zc > 0`).
 
 ```python
 EquidistantFisheye(
-    focal_length: float,
+    plate_scale: float,          # arcsec/px  ← preferred
     cx: float = 0.0,
     cy: float = 0.0,
+    # alternative: focal_length=<pixels>
 )
 ```
 
@@ -442,9 +444,10 @@ Equidistant model (`r = f·θ`). Supports the full sphere including rays behind 
 
 ```python
 StereographicFisheye(
-    focal_length: float,
+    plate_scale: float,          # arcsec/px  ← preferred
     cx: float = 0.0,
     cy: float = 0.0,
+    # alternative: focal_length=<pixels>
 )
 ```
 
@@ -579,7 +582,7 @@ The planned API will be additive and backward-compatible:
 ```python
 from pixel2sky.distortion import BrownConrady
 
-projection = Rectilinear(focal_length=800.0)
+projection = Rectilinear(plate_scale=258.0)  # 258 arcsec/px
 distortion = BrownConrady(k1=-0.12, k2=0.08, p1=0.0, p2=0.0)
 
 mapper = SkyMapper(

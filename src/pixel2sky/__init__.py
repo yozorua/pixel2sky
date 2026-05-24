@@ -14,7 +14,7 @@ Typical usage::
     mapper = SkyMapper(
         image_width=4096,
         image_height=3072,
-        projection=EquidistantFisheye(focal_length=800.0),
+        projection=EquidistantFisheye(plate_scale=258.0),  # 258 arcsec/px
         az0=180.0,
         alt0=45.0,
         roll=0.0,
