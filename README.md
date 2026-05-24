@@ -614,7 +614,7 @@ If you use `pixel2sky` in academic work, a research project, or a published pipe
   title        = {{pixel2sky}: Bidirectional Pixel ↔ Sky Coordinate
                   Transformation Library},
   year         = {2026},
-  version      = {0.1.0},
+  version      = {1.0.0},
   institution  = {Institute of Astronomy, National Tsing Hua University},
   url          = {https://github.com/yozorua/pixel2sky},
   note         = {Python package. NumPy- and SciPy-based; supports
