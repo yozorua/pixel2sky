@@ -32,3 +32,4 @@ htmlcov/
 *.swo
 .idea/
 .vscode/
+.claude/
