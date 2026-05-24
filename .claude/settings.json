@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(which pytest *)",
-      "Read(//opt/homebrew/**)"
-    ]
-  }
-}
