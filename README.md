@@ -4,6 +4,14 @@
 
 <br/>
 
+<div align="center">
+
+[![PyPI version](https://img.shields.io/pypi/v/pixel2sky.svg)](https://pypi.org/project/pixel2sky/)
+[![Python](https://img.shields.io/pypi/pyversions/pixel2sky.svg)](https://pypi.org/project/pixel2sky/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+</div>
+
 # pixel2sky
 
 **Bidirectional pixel ↔ sky coordinate transformation for any camera.**
@@ -189,11 +197,13 @@ pixel2sky/
 
 ## Installation
 
-### From PyPI (once released)
+### From PyPI
 
 ```bash
 pip install pixel2sky
 ```
+
+Available at [pypi.org/project/pixel2sky](https://pypi.org/project/pixel2sky/1.0.0/).
 
 ### From source
 
